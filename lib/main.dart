@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_counter_bloc/cubit/cubit/counter_cubit.dart';
 
 void main() {
   runApp(MyApp());
@@ -7,13 +9,18 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+    return BlocProvider(
+      create: (context) => CounterCubit(),
+      child: MaterialApp(
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        home: MyHomePage(
+          title: 'Flutter Demo Home Page',
+        ),
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
@@ -28,14 +35,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,17 +48,53 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               'You have pushed the button this many times:',
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+            BlocConsumer<CounterCubit, CounterState>(
+              builder: (context, state) {
+                return Text(
+                  state.counterValue.toString(),
+                  style: Theme.of(context).textTheme.headline4,
+                );
+              },
+              listener: (listenerContext, state) {
+                if (state.wasIncremented) {
+                  Scaffold.of(listenerContext).showSnackBar(
+                    SnackBar(
+                      content: Text('Yay! Counter incremented'),
+                      duration: Duration(milliseconds: 300),
+                    ),
+                  );
+                } else {
+                  Scaffold.of(listenerContext).showSnackBar(
+                    SnackBar(
+                      content: Text('Nay! Counter decremented'),
+                      duration: Duration(milliseconds: 300),
+                    ),
+                  );
+                }
+              },
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FloatingActionButton(
+                  onPressed: () {
+                    BlocProvider.of<CounterCubit>(context).decrement();
+                  },
+                  tooltip: 'Decrement',
+                  child: Icon(Icons.remove),
+                ),
+                SizedBox(width: 18),
+                FloatingActionButton(
+                  onPressed: () {
+                    context.read<CounterCubit>().increment();
+                  },
+                  tooltip: 'Increment',
+                  child: Icon(Icons.add),
+                ),
+              ],
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
       ),
     );
   }
